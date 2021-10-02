@@ -28,7 +28,7 @@ def instance_started?(ec2_client, instance_id)
 
     ec2_client.start_instances(instance_ids: [instance_id])
     ec2_client.wait_until(:instance_running, instance_ids: [instance_id])
-        puts 'Instance started.'
+        puts "Instance started. #{Process.pid} "
     return true
 
     rescue StandardError => e
@@ -58,7 +58,7 @@ def instance_stopped?(ec2_client, instance_id)
 
     ec2_client.stop_instances(instance_ids: [instance_id])
     ec2_client.wait_until(:instance_stopped, instance_ids: [instance_id])
-    puts 'Instance stopped.'
+    puts "Instance stopped.  #{Process.pid}  "
     return true
 
     rescue StandardError => e
@@ -104,13 +104,6 @@ lista_instancekeys(resource,minhatag,minhakey)
 puts '-' *19
 puts "\r\n"
 
-#Lista das instancias com tag
-#@my_instances
-
-
-#unless instance_stopped?(client, instance_id)
-#    puts 'Could not stop instance.'
-#end
 
 if ARGV[0] == 'start'
     puts "\r\n starting... \r\n"
@@ -118,19 +111,28 @@ if ARGV[0] == 'start'
     #    puts 'Could not start instance.'
     #end
     @my_instances.each do |machine|
-        unless instance_started?(client,machine)
-            puts machine + " não pode ser iniciada!"
+        fork do
+            puts "PID: #{Process.pid} - " + machine
+            unless instance_started?(client,machine)
+                puts machine + " não pode ser iniciada!"
+            end
         end
     end
+    Process.waitall
 end
+
 if ARGV[0] == 'stop'
     puts "\r\n stoping... \r\n"
     #unless instance_started?(client, instance_id)
     #    puts 'Could not start instance.'
     #end
     @my_instances.each do |machine|
-        unless instance_stopped?(client,machine)
-            puts machine + " não pode ser desligada!"
+        fork do
+            puts "PID: #{Process.pid} - " + machine
+            unless instance_stopped?(client,machine)
+                puts machine + " não pode ser desligada!"
+            end
         end
     end
+    Process.waitall
 end
